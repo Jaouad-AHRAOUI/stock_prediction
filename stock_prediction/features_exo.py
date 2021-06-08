@@ -29,7 +29,7 @@ def exo_selection(df, sp500=True, gold=True, eurusd=True, nasdaq=True, crude=Tru
         exo_col_name.append('Return_S&P500')
         # we store the df in the list to merge it later
         exo_df_list.append(data_sp500)
-    elif gold :
+    if gold :
         # we build the path of the csv file
         path_of = path + 'GC=F.csv'
         # we load the csv to pd.dtaframe
@@ -41,7 +41,7 @@ def exo_selection(df, sp500=True, gold=True, eurusd=True, nasdaq=True, crude=Tru
         exo_col_name.append('Return_Gold')
         # we store the df in the list to merge it later
         exo_df_list.append(data_gold)
-    elif eurusd :
+    if eurusd :
         # we build the path of the csv file
         path_of = path + 'EURUSD=X.csv'
         # we load the csv to pd.dtaframe
@@ -52,7 +52,7 @@ def exo_selection(df, sp500=True, gold=True, eurusd=True, nasdaq=True, crude=Tru
         data_usd = data_usd[['Date', 'Return_Usd']]
         exo_col_name.append('Return_Usd')
         exo_df_list.append(data_usd)
-    elif nasdaq:
+    if nasdaq:
         # we build the path of the csv file
         path_of = path + '^IXIC.csv'
         # we load the csv to pd.dtaframe
@@ -63,7 +63,7 @@ def exo_selection(df, sp500=True, gold=True, eurusd=True, nasdaq=True, crude=Tru
         data_nasdaq = data_nasdaq[['Date', 'Return_Nasdaq']]
         exo_col_name.append('Return_Nasdaq')
         exo_df_list.append(data_nasdaq)
-    elif crude:
+    if crude:
         # we build the path of the csv file
         path_of = path + 'CL=F.csv'
         # we load the csv to pd.dtaframe
@@ -74,7 +74,7 @@ def exo_selection(df, sp500=True, gold=True, eurusd=True, nasdaq=True, crude=Tru
         data_crude = data_crude[['Date', 'Return_Crude']]
         exo_col_name.append('Return_Crude')
         exo_df_list.append(data_crude)
-    elif vix:
+    if vix:
         # we build the path of the csv file
         path_of = path + '^VIX.csv'
         # we load the csv to pd.dtaframe
@@ -89,15 +89,14 @@ def exo_selection(df, sp500=True, gold=True, eurusd=True, nasdaq=True, crude=Tru
     # we merge it on the DataFrame returned by Data_prep in data_prep.py
 
     # first we need to merge the first df of the list on the dataframe data_prep
-    data_exo = df.merge(exo_df_list[0], how='inner', on='Date')
-    for dataframe in exo_df_list[1:] :
-        data_exo = data_exo.merge(dataframe, how='inner', on='Date')
+    for dataframe in exo_df_list :
+        df = df.merge(dataframe, how='inner', on='Date')
 
     # we now have the dataframe ready for the modelling
     # this function returns the dataframe & the list of indexes we decided to include
     # like that, when doing the rebasing, we will be able to rebase the selected indexes
     # without naming them
-    return data_exo, exo_col_name
+    return df, exo_col_name
 
 def exo_selection_euro_stoxx_50(df, period,columns) :
     '''This function will select the indexes we want to be part of the df'''
