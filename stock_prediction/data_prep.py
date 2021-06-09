@@ -123,7 +123,7 @@ class Data_Prep :
         # we want the path of where we rare
         we_are = os.getcwd()
         # we build the path of the csv file
-        path = we_are + '/raw_data/' + csv_file + '.csv'
+        path = we_are[:-10] + '/raw_data/' + csv_file + '.csv'
 
         return path
 
@@ -233,7 +233,7 @@ class Data_Prep :
         '''This function will select the indexes we want to be part of the df'''
 
         # we build the path of the euro stocks csv file
-        path = os.getcwd() + '/raw_data/' + '^STOXX50E.csv'
+        path = os.getcwd()[:-10] + '/raw_data/' + '^STOXX50E.csv'
         df_es50 = pd.read_csv(path)
         # we need the code of the company
         col_name = company_dict[self.name]
