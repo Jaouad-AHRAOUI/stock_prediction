@@ -85,7 +85,7 @@ def exo_selection(df, sp500=True, gold=True, eurusd=True, nasdaq=True, crude=Tru
         data_vix = pd.read_csv(path_of)
         # for the VIX, index of volatility of US markets, we don't want thye return
         # we mill have to keep that index un-rebased
-        data_vix['Vix_No_Rebase'] = data_vix['Close']
+        data_vix['Vix_No_Rebase'] = data_vix['Close'] / 100
         data_vix = data_vix[['Date', 'Vix_No_Rebase']]
         exo_df_list.append(data_vix)
 
