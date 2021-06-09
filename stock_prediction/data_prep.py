@@ -181,39 +181,51 @@ class Data_Prep :
 
         # we call the function to add the index features EuroStoxx 50
         # the function creates the return for the index, volume, and Relative return
-        #self.exo_stoxx50(data)
+        data = self.exo_stoxx50(data)
         # finally we remove the rows with NaN (because volatility calculation)
         # and reset the index
-        data = data.dropna()
+        data = data.drop(index=range(0,252))
         data = data.reset_index(drop=True)
 
         # we return a df with 4 years of prices
         return data
 
-    def select_features(self, df, Log_Return=True, High_Low=True, High_Close=True, Low_Close=True,
+    def select_features(self, df, Return=True, Log_Return=False, High_Low=True, High_Close=True, Low_Close=True,
                         Volume_Change=True, Period_Volum=True, Annual_Vol=True,
-                        Period_Vol=True) :
+                        Period_Vol=True, Return_Index=True, Volum_Index=True, Relative_Return=True) :
         '''Function to be able to remove easily features'''
+
+        # *******************
+        # if period < 252 , don't use Annual_vol
+        #********************
 
         col_name = company_dict[self.name]
         # we retrieve our dataframe prepared
         data = df
+        if Return == False :
+            del data[f'Return_{col_name}']
         if Log_Return == False:
             del data[f'Log_Return_{col_name}']
-        elif High_Low==False:
+        if High_Low==False:
             del data[f'High-Low_{col_name}']
-        elif High_Close==False:
+        if High_Close==False:
             del data[f'High-Close_{col_name}']
-        elif Low_Close == False:
+        if Low_Close == False:
             del data[f'Low-Close_{col_name}']
-        elif Volume_Change == False:
+        if Volume_Change == False:
             del data[f'Volume-Change_{col_name}']
-        elif Period_Volum == False:
+        if Period_Volum == False:
             del data[f'Period_Volum_{col_name}']
-        elif Annual_Vol == False:
+        if Annual_Vol == False:
             del data[f'Annual_Vol_{col_name}']
-        elif Period_Vol == False:
+        if Period_Vol == False:
             del data[f'Period_Vol_{col_name}']
+        if Return_Index == False:
+            del data['Return_stoxx_50']
+        if Volum_Index == False:
+            del data['Period_Volum_stoxx_50']
+        if Relative_Return == False:
+            del data[f'{col_name}_relatif']
 
         return data
 
@@ -230,7 +242,7 @@ class Data_Prep :
         df_es50['Return_stoxx_50'] = df_es50['Close'].pct_change(1)
         df_es50['Period_Volum_stoxx_50'] = df_es50['Volume'] / df_es50['Volume'].rolling(self.period).mean() - 1
         # we select only the 2 columns we need
-        df_es50 = df_es50[['Return_stoxx_50', 'Period_Volum_stoxx_50']]
+        df_es50 = df_es50[['Date', 'Return_stoxx_50', 'Period_Volum_stoxx_50']]
         # we merge on Date
         df = df.merge(df_es50, how='left', on='Date')
 
