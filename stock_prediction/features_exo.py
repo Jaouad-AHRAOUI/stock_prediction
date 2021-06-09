@@ -9,7 +9,7 @@ def exo_selection(df, sp500=True, gold=True, eurusd=True, nasdaq=True, crude=Tru
 
     # we want the path of where we rare
     we_are = os.getcwd()
-    path = we_are + '/raw_data/'
+    path = we_are[:-10] + '/raw_data/'
     # we need a list to store the column name  to be able to access easily when rebasing
     exo_col_name = []
     # we need to store the df in a list to know at the end which df we need to merge
