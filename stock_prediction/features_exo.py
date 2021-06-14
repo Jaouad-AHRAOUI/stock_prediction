@@ -7,9 +7,9 @@ def exo_selection(df, sp500=True, gold=True, eurusd=True, nasdaq=True, crude=Tru
     for the modelisation.
     We need to True/False the indexes in the parameters'''
 
-    # we want the path of where we rare
-    we_are = os.getcwd()
-    path = we_are[:-10] + '/raw_data/'
+    # we want the path of the python file
+    we_are = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+    path = we_are + '/raw_data/'
     # we need a list to store the column name  to be able to access easily when rebasing
     exo_col_name = []
     # we need to store the df in a list to know at the end which df we need to merge

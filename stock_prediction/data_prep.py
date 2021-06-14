@@ -119,10 +119,10 @@ class Data_Prep :
         '''this function gives us the right csv name file for a specific company'''
         # we retrieve the name of the file in the dict
         csv_file = company_dict[self.name]
-        # we want the path of where we rare
-        we_are = os.getcwd()
+        # we want the path of the python file
+        we_are = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
         # we build the path of the csv file
-        path = we_are[:-10] + '/raw_data/' + csv_file + '.csv'
+        path = we_are + '/raw_data/' + csv_file + '.csv'
 
         return path
 
@@ -232,7 +232,8 @@ class Data_Prep :
         '''This function will select the indexes we want to be part of the df'''
 
         # we build the path of the euro stocks csv file
-        path = os.getcwd()[:-10] + '/raw_data/' + '^STOXX50E.csv'
+        we_are = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+        path = we_are + '/raw_data/' + '^STOXX50E.csv'
         df_es50 = pd.read_csv(path)
         # we need the code of the company
         col_name = company_dict[self.name]
