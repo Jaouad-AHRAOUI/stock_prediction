@@ -11,7 +11,7 @@ import os
 class Data_Prep_Api :
 
     def __init__(self, name,period):
-        self.company_dict = pd.read_csv(os.getcwd()[:-10] + "/stock_prediction/data/company_dict.csv")
+        self.company_dict = pd.read_csv(os.path.join(os.path.dirname(__file__), "data/company_dict.csv"))
         self.company_dict.set_index("name",inplace = True)
         if name not in self.company_dict.index: 
             raise NameError(f"{name} should be in ---->", self.company_dict.index)
