@@ -65,7 +65,8 @@ company_dict = {
     'siemens' : 'SIE.DE',
     'total' : 'FP.PA',
     'sanofi' : 'SAN.PA',
-    'allianz' : 'ALV.DE', 'loreal' : '',
+    'allianz' : 'ALV.DE',
+    'loreal' : 'OR.PA',
     'schneider' : 'SU.PA',
     'iberdrola' : 'IBE.MC',
     'enel' : 'ENEL.MI',
@@ -291,4 +292,3 @@ class Data_Prep :
         data = pd.concat([data, data_rebased], axis=1)
 
         return data
-
