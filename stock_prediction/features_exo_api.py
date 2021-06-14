@@ -9,7 +9,7 @@ def exo_selection_api(df, names, max = False) :
     for the modelisation.
     names is a list of all exogene feature'''
     # we want the path of where we rare
-    company_dict = pd.read_csv(os.getcwd()[:-10] + "/stock_prediction/data/company_dict.csv")
+    company_dict = pd.read_csv(os.path.join(os.path.dirname(__file__), "data/company_dict.csv"))
     company_dict.set_index("name",inplace = True)                   
     names_without_vix = names.copy()
     if "vix" in names :
