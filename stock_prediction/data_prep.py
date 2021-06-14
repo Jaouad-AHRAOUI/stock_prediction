@@ -66,7 +66,8 @@ company_dict = {
     'siemens' : 'SIE.DE',
     'total' : 'FP.PA',
     'sanofi' : 'SAN.PA',
-    'allianz' : 'ALV.DE', 'loreal' : '',
+    'allianz' : 'ALV.DE',
+    'loreal' : 'OR.PA',
     'schneider' : 'SU.PA',
     'iberdrola' : 'IBE.MC',
     'enel' : 'ENEL.MI',
@@ -81,7 +82,6 @@ company_dict = {
     'bnp' : 'BNP.PA',
     'anheuser-busch' : 'ABI.BR',
     'vinci' : 'DG.PA',
-    'prosus' : 'PRX.AS',
     'banco-santander' : 'SAN.MC',
     'philips' : 'PHIA.AS',
     'kering' : 'KER.PA',
@@ -145,7 +145,8 @@ class Data_Prep :
         # why ? Because no impact on dividends and stock splits
         data[f'Return_{col_name}'] = data['Adj Close'].pct_change(1)
         # we create the feature "LOG RETURN" to test which one is working better
-        data[f'Log_Return_{col_name}'] = np.log(data["Close"] / data["Close"].shift())
+        data[f'Log_Return_{col_name}'] = np.log(data["Close"] /
+                                                data['Adj Close'].shift())
         # we create the feature "HIGH-LOW"
         data[f'High-Low_{col_name}'] = (data['High'] - data['Low']) / data['Low']
         # we create the feature "HIGH-CLOSE" --> difference between closing price and higher price
@@ -293,4 +294,3 @@ class Data_Prep :
         data = pd.concat([data, data_rebased], axis=1)
 
         return data
-
