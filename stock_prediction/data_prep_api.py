@@ -1,145 +1,39 @@
 import pandas as pd
 import numpy as np
 from math import sqrt
+
+from pandas.io.formats.format import SeriesFormatter
+import yfinance as yf
+from datetime import date, timedelta
 import os
 
 
-# list of the companies
-# refer to this name to ask the csv file for the analysis
-company_list = ['asml',
-                'lvmh',
-                'sap',
-                'linde',
-                'siemens',
-                'total',
-                'sanofi',
-                'allianz',
-                'loreal',
-                'schneider',
-                'iberdrola',
-                'enel',
-                'air-liquide',
-                'basf',
-                'bayer',
-                'adidas',
-                'airbus',
-                'adyen',
-                'deutsche-telecom',
-                'daimler',
-                'bnp',
-                'anheuser-busch',
-                'vinci',
-                'prosus',
-                'banco-santander',
-                'philips',
-                'kering',
-                'deutsche-post',
-                'axa',
-                'safran',
-                'danone',
-                'essilor',
-                'intensa',
-                'munchener',
-                'pernod',
-                'vonovia',
-                'vw',
-                'ing',
-                'crh',
-                'industria-diseno',
-                'kone',
-                'deutsche-borse',
-                'ahold',
-                'flutter',
-                'amadeus',
-                'engie',
-                'bmw',
-                'vivendi',
-                'eni',
-                'nokia']
+class Data_Prep_Api :
 
-# we create a dictionary with name in key and csv file in value
-company_dict = {
-    'asml' : 'ASML.AS',
-    'lvmh': 'MC.PA',
-    'sap' : 'SAP.DE',
-    'linde' : 'LIN',
-    'siemens' : 'SIE.DE',
-    'total' : 'FP.PA',
-    'sanofi' : 'SAN.PA',
-    'allianz' : 'ALV.DE', 'loreal' : '',
-    'schneider' : 'SU.PA',
-    'iberdrola' : 'IBE.MC',
-    'enel' : 'ENEL.MI',
-    'air-liquide' : 'AI.PA',
-    'basf' : 'BAS.DE',
-    'bayer' : 'BAYN.DE',
-    'adidas' : 'ADS.DE',
-    'airbus' : 'AIR.PA',
-    'adyen' : 'ADYEN.AS',
-    'deutsche-telecom' : 'DTE.DE',
-    'daimler' : 'DAI.DE',
-    'bnp' : 'BNP.PA',
-    'anheuser-busch' : 'ABI.BR',
-    'vinci' : 'DG.PA',
-    'prosus' : 'PRX.AS',
-    'banco-santander' : 'SAN.MC',
-    'philips' : 'PHIA.AS',
-    'kering' : 'KER.PA',
-    'deutsche-post' : 'DPW.DE',
-    'axa' : 'CS.PA',
-    'safran' : 'SAF.PA',
-    'danone'  : 'BN.PA',
-    'essilor' : 'EL.PA',
-    'intensa' : 'ISP.MI',
-    'munchener' : 'MUV2.DE',
-    'pernod' : 'RI.PA',
-    'vonovia' : 'VNA.DE',
-    'vw' : 'VOW3.DE',
-    'ing' : 'INGA.AS',
-    'crh' : 'CRG.IR',
-    'industria-diseno' : 'ITX.MC',
-    'kone' : 'KNEBV.HE',
-    'deutsche-borse' : 'DB1.DE',
-    'ahold' : 'AHOG.DE',
-    'flutter' : 'FLTR.IR',
-    'amadeus' : 'AMS.MC',
-    'engie' : 'ENGI.PA',
-    'bmw' : 'BMW.DE',
-    'vivendi' : 'VIV.PA',
-    'eni' : 'ENI.MI',
-    'nokia' : 'NOKIA.HE'
-}
-
-class Data_Prep :
-
-    def __init__(self, name, period):
+    def __init__(self, name,period):
+        self.company_dict = pd.read_csv(os.getcwd()[:-10] + "/stock_prediction/data/company_dict.csv")
+        self.company_dict.set_index("name",inplace = True)
+        if name not in self.company_dict.index: 
+            raise NameError(f"{name} should be in ---->", self.company_dict.index)
         self.name = name
         self.period = period
+        
+    def load_data(self,max=False) :
+        '''laod data from api yfinance'''
+        if max==False:
+            return yf.download(self.company_dict.loc[f"{self.name}"][0], start=str(date.today() - timedelta(weeks=52*5)), end=str(date.today()))
+        else:
+            return yf.download(self.company_dict.loc[f"{self.name}"][0], period = "max")
 
-    def find_csv_path(self) :
-        '''this function gives us the right csv name file for a specific company'''
-        # we retrieve the name of the file in the dict
-        csv_file = company_dict[self.name]
-        # we want the path of where we rare
-        we_are = os.getcwd()
-        # we build the path of the csv file
-        path = we_are[:-10] + '/raw_data/' + csv_file + '.csv'
-
-        return path
-
-    def load_csv(self) :
-        '''laod the csv file to pandas dataframe'''
-        data  = pd.read_csv(self.find_csv_path())
-        return data
-
-    def data_prep(self) :
+    def data_prep_api(self,max=False) :
         '''Function that make the data preparation for analysis'''
         # first we retrieve the df
-        data = self.load_csv()
+        data = self.load_data(max)
+        data.reset_index(inplace=True)
 
         # to be able to know the columns we use when df contains several stocks
         # we put the code of the company in each column name
-        col_name = company_dict[self.name]
+        col_name = self.company_dict.loc[f"{self.name}"][0]
 
         # we create the column "RETURN" on "Adj Close"
         # why ? Because no impact on dividends and stock splits
@@ -181,7 +75,7 @@ class Data_Prep :
 
         # we call the function to add the index features EuroStoxx 50
         # the function creates the return for the index, volume, and Relative return
-        data = self.exo_stoxx50(data)
+        data = self.exo_stoxx50_api(data,max)
         # finally we remove the rows with NaN (because volatility calculation)
         # and reset the index
         data = data.drop(index=range(0,252))
@@ -190,7 +84,7 @@ class Data_Prep :
         # we return a df with 4 years of prices
         return data
 
-    def select_features(self, df, Return=True, Log_Return=False, High_Low=True, High_Close=True, Low_Close=True,
+    def select_features_api(self, df, Return=True, Log_Return=False, High_Low=True, High_Close=True, Low_Close=True,
                         Volume_Change=True, Period_Volum=True, Annual_Vol=True,
                         Period_Vol=True, Return_Index=True, Volum_Index=True, Relative_Return=True) :
         '''Function to be able to remove easily features'''
@@ -199,7 +93,7 @@ class Data_Prep :
         # if period < 252 , don't use Annual_vol
         #********************
 
-        col_name = company_dict[self.name]
+        col_name = self.company_dict.loc[f'{self.name}'][0]
         # we retrieve our dataframe prepared
         data = df
         if Return == False :
@@ -229,14 +123,17 @@ class Data_Prep :
 
         return data
 
-    def exo_stoxx50(self, df) :
+    def exo_stoxx50_api(self, df, max=False) :
         '''This function will select the indexes we want to be part of the df'''
 
-        # we build the path of the euro stocks csv file
-        path = os.getcwd()[:-10] + '/raw_data/' + '^STOXX50E.csv'
-        df_es50 = pd.read_csv(path)
+        # we load euro stoxx 50 from yfinance
+        df_es50 = yf.download("^GSPC", start=str(date.today() - timedelta(weeks=52*5)), end=str(date.today()))
+        if max==True:
+            df_es50 = yf.download("^GSPC", period="max")
+            
+        df_es50.reset_index(inplace=True)
         # we need the code of the company
-        col_name = company_dict[self.name]
+        col_name = self.company_dict.loc[f"{self.name}"][0]
 
         # we create the new features in the df es_50
         df_es50['Return_stoxx_50'] = df_es50['Close'].pct_change(1)
@@ -254,7 +151,7 @@ class Data_Prep :
 
         return df
 
-    def Price_Rebase(self, df) :
+    def Price_Rebase_api(self, df) :
         '''This function allows us to rebase 100 at the beginning of our time period
         and follow only the return and be able to compare it with exogenous features
         COLUMNS parameter is a list of features to rebase
@@ -293,4 +190,3 @@ class Data_Prep :
         data = pd.concat([data, data_rebased], axis=1)
 
         return data
-
