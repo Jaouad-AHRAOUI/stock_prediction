@@ -13,11 +13,11 @@ class Data_Prep_Api :
     def __init__(self, name,period):
         self.company_dict = pd.read_csv(os.path.join(os.path.dirname(__file__), "data/company_dict.csv"))
         self.company_dict.set_index("name",inplace = True)
-        if name not in self.company_dict.index: 
+        if name not in self.company_dict.index:
             raise NameError(f"{name} should be in ---->", self.company_dict.index)
         self.name = name
         self.period = period
-        
+
     def load_data(self,max=False) :
         '''laod data from api yfinance'''
         if max==False:
@@ -55,7 +55,7 @@ class Data_Prep_Api :
         data[f'Period_Volum_{col_name}'] = data['Volume'] / data['Volume'].rolling(self.period).mean() - 1
         # finally volatility
         # one annual vl-olatility, computed on 252 days
-        data[f'Annual_Vol_{col_name}'] = data[f'Return_{col_name}'].rolling(252).std() * sqrt(252)
+        #data[f'Annual_Vol_{col_name}'] = data[f'Return_{col_name}'].rolling(252).std() * sqrt(252)
         # another volatility if we work on a pecific time period
         # or if we want to change that parameter
         data[f'Period_Vol_{col_name}'] = data[f'Return_{col_name}'].rolling(
@@ -78,7 +78,7 @@ class Data_Prep_Api :
         data = self.exo_stoxx50_api(data,max)
         # finally we remove the rows with NaN (because volatility calculation)
         # and reset the index
-        data = data.drop(index=range(0,252))
+        data = data.drop(index=range(0, self.period))
         data = data.reset_index(drop=True)
 
         # we return a df with 4 years of prices
@@ -110,8 +110,8 @@ class Data_Prep_Api :
             del data[f'Volume-Change_{col_name}']
         if Period_Volum == False:
             del data[f'Period_Volum_{col_name}']
-        if Annual_Vol == False:
-            del data[f'Annual_Vol_{col_name}']
+        # if Annual_Vol == False:
+        #     del data[f'Annual_Vol_{col_name}']
         if Period_Vol == False:
             del data[f'Period_Vol_{col_name}']
         if Return_Index == False:
@@ -130,7 +130,7 @@ class Data_Prep_Api :
         df_es50 = yf.download("^GSPC", start=str(date.today() - timedelta(weeks=52*5)), end=str(date.today()))
         if max==True:
             df_es50 = yf.download("^GSPC", period="max")
-            
+
         df_es50.reset_index(inplace=True)
         # we need the code of the company
         col_name = self.company_dict.loc[f"{self.name}"][0]
