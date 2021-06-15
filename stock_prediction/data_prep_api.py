@@ -127,9 +127,9 @@ class Data_Prep_Api :
         '''This function will select the indexes we want to be part of the df'''
 
         # we load euro stoxx 50 from yfinance
-        df_es50 = yf.download("^GSPC", start=str(date.today() - timedelta(weeks=52*5)), end=str(date.today()))
+        df_es50 = yf.download("^STOXX50E", start=str(date.today() - timedelta(weeks=52*5)), end=str(date.today()))
         if max==True:
-            df_es50 = yf.download("^GSPC", period="max")
+            df_es50 = yf.download("^STOXX50E", period="max")
 
         df_es50.reset_index(inplace=True)
         # we need the code of the company
