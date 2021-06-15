@@ -25,58 +25,58 @@ from stock_prediction.features_exo_api import exo_selection_api
 
 # companies dict with name in key to load and idx in value
 company_dict = {
-    'asml' : 'ASML.AS',
-    'lvmh': 'MC.PA',
-    'sap' : 'SAP.DE',
-    'linde' : 'LIN',
-    'siemens' : 'SIE.DE',
-    'total' : 'FP.PA',
-    'sanofi' : 'SAN.PA',
-    'allianz' : 'ALV.DE', 
-    'schneider' : 'SU.PA',
-    'iberdrola' : 'IBE.MC',
-    'enel' : 'ENEL.MI',
-    'air-liquide' : 'AI.PA',
-    'basf' : 'BAS.DE',
-    'bayer' : 'BAYN.DE',
-    'adidas' : 'ADS.DE',
-    'airbus' : 'AIR.PA',
-    'adyen' : 'ADYEN.AS',
-    'deutsche-telecom' : 'DTE.DE',
-    'daimler' : 'DAI.DE',
-    'bnp' : 'BNP.PA',
-    'anheuser-busch' : 'ABI.BR',
+    # 'asml' : 'ASML.AS',
+    # 'lvmh': 'MC.PA',
+    # 'sap' : 'SAP.DE',
+    # 'linde' : 'LIN',
+    # 'siemens' : 'SIE.DE',
+    # 'total' : 'FP.PA',
+    # 'sanofi' : 'SAN.PA',
+    # 'allianz' : 'ALV.DE', 
+    # 'schneider' : 'SU.PA',
+    # 'iberdrola' : 'IBE.MC',
+    # 'enel' : 'ENEL.MI',
+    # 'air-liquide' : 'AI.PA',
+    # 'basf' : 'BAS.DE',
+    # 'bayer' : 'BAYN.DE',
+    # 'adidas' : 'ADS.DE',
+    # 'airbus' : 'AIR.PA',
+    # 'adyen' : 'ADYEN.AS',
+    # 'deutsche-telecom' : 'DTE.DE',
+    # 'daimler' : 'DAI.DE',
+    # 'bnp' : 'BNP.PA',
+    # 'anheuser-busch' : 'ABI.BR',
     'vinci' : 'DG.PA',
-    'banco-santander' : 'SAN.MC',
-    'philips' : 'PHIA.AS',
-    'kering' : 'KER.PA',
-    'deutsche-post' : 'DPW.DE',
-    'axa' : 'CS.PA',
-    'safran' : 'SAF.PA',
-    'danone'  : 'BN.PA',
-    'essilor' : 'EL.PA',
-    'intensa' : 'ISP.MI',
-    'munchener' : 'MUV2.DE',
-    'pernod' : 'RI.PA',
-    'vonovia' : 'VNA.DE',
-    'vw' : 'VOW3.DE',
-    'ing' : 'INGA.AS',
-    'crh' : 'CRG.IR',
-    'industria-diseno' : 'ITX.MC',
-    'kone' : 'KNEBV.HE',
-    'deutsche-borse' : 'DB1.DE',
-    'ahold' : 'AHOG.DE',
-    'flutter' : 'FLTR.IR',
-    'amadeus' : 'AMS.MC',
-    'engie' : 'ENGI.PA',
-    'bmw' : 'BMW.DE',
-    'vivendi' : 'VIV.PA',
-    'eni' : 'ENI.MI',
-    'nokia' : 'NOKIA.HE'
+    # 'banco-santander' : 'SAN.MC',
+    # 'philips' : 'PHIA.AS',
+    # 'kering' : 'KER.PA',
+    # 'deutsche-post' : 'DPW.DE',
+    # 'axa' : 'CS.PA',
+    # 'safran' : 'SAF.PA',
+    # 'danone'  : 'BN.PA',
+    # 'essilor' : 'EL.PA',
+    # 'intensa' : 'ISP.MI',
+    # 'munchener' : 'MUV2.DE',
+    # 'pernod' : 'RI.PA',
+    # 'vonovia' : 'VNA.DE',
+    # 'vw' : 'VOW3.DE',
+    # 'ing' : 'INGA.AS',
+    # 'crh' : 'CRG.IR',
+    # 'industria-diseno' : 'ITX.MC',
+    # 'kone' : 'KNEBV.HE',
+    # 'deutsche-borse' : 'DB1.DE',
+    # 'ahold' : 'AHOG.DE',
+    # 'flutter' : 'FLTR.IR',
+    # 'amadeus' : 'AMS.MC',
+    # 'engie' : 'ENGI.PA',
+    # 'bmw' : 'BMW.DE',
+    # 'vivendi' : 'VIV.PA',
+    # 'eni' : 'ENI.MI',
+    # 'nokia' : 'NOKIA.HE'
 }
 
 #---Load csv data function 
-def load_preproc_data(company='vinci'):
+def load_preproc_data(company): #='vinci'
     """This function allows to load the data for chosen company,
     to select features make changes directly inside this function."""
     
@@ -92,7 +92,7 @@ def load_preproc_data(company='vinci'):
     # if period < 252 , don't use Annual_vol
     #********************
     prep_class.select_features(df, Return = True, Log_Return=False, High_Low=True, High_Close=True, Low_Close=True,
-                            Volume_Change=False, Period_Volum=True, Annual_Vol=True,
+                            Volume_Change=False, Period_Volum=True, Annual_Vol=False,
                             Period_Vol=True, Return_Index=True, Volum_Index=True, Relative_Return=True)
 
     #(4) Function that add the exogenous features that you need to select 
@@ -145,6 +145,23 @@ def shift_sequences(df, idx, length=10, horizon=1):
     perm = np.random.permutation(last_possible)
     X = np.array(X)[perm, :, :]
     y = np.array(y)[perm]
+    return X, y
+
+
+#--shift_sequences in order
+def shift_sequences_pred(df, idx, length=10, horizon=1):
+    """This function is able to get as many subsequences for X and a corresponding target y
+    Nas possible, taking in account lenght of sequence and horizon."""
+    
+    last_possible = df.shape[0] - length - horizon
+    X=[]
+    y=[]
+    for start in range(last_possible):
+        X.append(df[start: start+length].values)
+        y.append(df.iloc[start+length+horizon][f'Return_{idx}'])
+    
+    X = np.array(X)
+    y = np.array(y)
     return X, y
 
 
@@ -330,7 +347,7 @@ def prediction_return_CNN(start='2020-01-03', stop='2020-12-31'):
         and to make stock return prediction per company for a given period of time."""
 
     #---Load trained model, TODO: extract len_ from model
-    model = models.load_model('./saved_models_cnn/saved_test')
+    model = models.load_model('/home/khody/code/anastasia-77/Jaouad-AHRAOUI/stock_prediction/stock_prediction/saved_models_cnn/saved_5y_cnn') #'./saved_models_cnn/saved_test'
 
     len_ = model.layers[0].output_shape[1]
 
@@ -340,7 +357,7 @@ def prediction_return_CNN(start='2020-01-03', stop='2020-12-31'):
         prep_class = Data_Prep_Api(company, 252)
         df = prep_class.data_prep_api() # (max=True)
         prep_class.select_features_api(df, Return = True, Log_Return=False, High_Low=True, High_Close=True, Low_Close=True,
-                            Volume_Change=False, Period_Volum=True, Annual_Vol=True,
+                            Volume_Change=False, Period_Volum=True, Annual_Vol=False,
                             Period_Vol=True, Return_Index=True, Volum_Index=True, Relative_Return=True)
 
         df = exo_selection_api(df, ["sp500","gold", "eurusd", "nasdaq", "crude", "vix"]) # ,max=True)
@@ -362,9 +379,10 @@ def prediction_return_CNN(start='2020-01-03', stop='2020-12-31'):
 
     for company in company_dict.keys():
         data_to_predict_loc, idx__loc = load_predict_data(company, start_date=start, end_date=stop, len_=len_)
-        X_test_loc, y_test_loc = shift_sequences(df = data_to_predict_loc, idx = idx__loc, length=len_)
+
+        X_test_loc, y_test_loc = shift_sequences_pred(df = data_to_predict_loc, idx = idx__loc, length=len_)
         
         prediction_loc = model.predict(X_test_loc)
-        prediction[company] = prediction_loc.ravel()
+        prediction[company] = [prediction_loc.ravel(), data_to_predict_loc.index]
 
     return prediction
