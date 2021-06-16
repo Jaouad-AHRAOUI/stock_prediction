@@ -5,11 +5,12 @@ import yfinance as yf
 from datetime import date, timedelta, datetime
 from stock_prediction.data_prep_api import Data_Prep_Api
 from stock_prediction.features_exo_api import exo_selection_api
+from stock_prediction.arima import arima_multi_day
 
 from stock_prediction.params import company_dict, dict_max_train, exo_dict, company_list
 
 
-def data_collection(start_date, period) :
+def data_collection(start_date, period=20) :
     '''This function will load all the yahoo finance data and store them in dictionaries
     We will create different dictionaries for the later uses in the modeling functions
     dict for hard_data : 1 return
@@ -20,6 +21,8 @@ def data_collection(start_date, period) :
     #************************************************************
     # FIND THE REAL START DATE THAT ALLOWS US TO LOAD ENOUGH DAYS TO MAKE THE MODELLING
     # THINK ABOUT THE 20 DAYS DROP
+    start_date_delta = str((datetime.strptime(start_date, '%Y-%m-%d') -
+                            timedelta(days=120)).date())
     #************************************************************
 
     # we want a dictionary to store the yahoo files as they come
@@ -37,7 +40,7 @@ def data_collection(start_date, period) :
         df_es50 = yf.download("^STOXX50E", period="max")
     else :
         df_es50 = yf.download("^STOXX50E",
-                              start=str(start_date),
+                              start=str(start_date_delta),
                               end=str(date.today()))
     # we need to reset the index because Date is in index and we want it as features
     df_es50.reset_index(inplace=True)
@@ -53,13 +56,13 @@ def data_collection(start_date, period) :
     # that returns the list of the exogenous indexes and a list with the dataframe with the returns
     # the list of the indexes is full at that time, we will remove them after if needed
     exo_feat = ['eurusd', 'sp500', 'gold', 'nasdaq', 'crude', 'vix']
-    exo_col_name, exo_df_list = exo_selection_api(exo_feat,start_date)
+    exo_col_name, exo_df_list = exo_selection_api(exo_feat, start_date_delta)
 
     for comp in company_list:
 
         # we instatiate a class Dat_Prep
         stock = Data_Prep_Api(comp, 20)
-        hard_data = stock.load_data(start_date)
+        hard_data = stock.load_data(start_date_delta)
         # we need to reset index to have Date as features
         hard_data.reset_index(drop=False, inplace=True)
         # we drop na for the hard_df we will have clean df later
@@ -106,3 +109,24 @@ def data_collection(start_date, period) :
 
     # then we return the 2 dict and 1 df
     return dict_hard_data, dict_prep_data, df_es50
+
+def call_arima(start_date, dict_prep_data, alpha=0.05) :
+    ''' This function call the data_collection for each company in the list
+    Then call the arima function and returns a dictionary with all df results from arima
+    '''
+    arima_df = {}
+
+    # we need to trasform the date to datetime
+    # and find the number of days from today to start_date
+    today = datetime.today()
+    days = today - datetime.strptime(start_date, '%Y-%m-%d')
+    days = days.days
+
+    # we make a loop with company name that retrieve the df modified
+    # and give it to armai function
+    for comp in company_list :
+        df_stock = dict_prep_data[comp]
+        df_arima = arima_multi_day(comp, days, df_stock, alpha=alpha)
+        arima_df[comp] = df_arima
+
+    return arima_df
