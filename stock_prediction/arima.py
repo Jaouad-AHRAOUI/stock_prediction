@@ -1,7 +1,5 @@
-from numpy.core.fromnumeric import std
-from stock_prediction.data_prep import Data_Prep
 from stock_prediction.features_exo import exo_selection
-
+from stock_prediction.data_prep_api import Data_Prep_Api
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.arima_model import ARIMA
@@ -11,7 +9,7 @@ from sklearn.metrics import mean_absolute_percentage_error as MAPE
 from stock_prediction.params import company_dict, dict_max_train, exo_dict
 
 
-def arima_multi_day(name, days, alpha) :
+def arima_multi_day(name, days, df_stocks, alpha=0.05):
     '''This function compute the ARIMA model for a specific stock
     on a period of time.
     It returns a df with predictions, true values, confidence interval
@@ -29,30 +27,30 @@ def arima_multi_day(name, days, alpha) :
     global_length = best_max_train + days
 
     # we instantiate the Data_Prep class to create the df
-    stock = Data_Prep(name, best_max_train)
+    #stock = Data_Prep(name, best_max_train)
     # with data_prep function we add the features
     #*********************************************
     # WE MUST MODIFY THE data_prep FUNCTION we_are
     #*********************************************
-    data_global = stock.data_prep()
+    #data_global = stock.data_prep()
     # with function select_features we select the best exo features
     best_exo_features = exo_dict[name]
     # after several tests, we found that the best exo features for all stocks
     # were High_Close, and Low_Close # if more tests bring us to specific features
     # we will have to make a if for the stocks concerned
-    data_exo = stock.select_features(data_global,
-                                     Return=True,
-                                     Log_Return=False,
-                                     High_Low=False,
-                                     High_Close=True,
-                                     Low_Close=True,
-                                     Volume_Change=False,
-                                     Period_Volum=False,
-                                     Annual_Vol=False,
-                                     Period_Vol=False,
-                                     Return_Index=False,
-                                     Volum_Index=False,
-                                     Relative_Return=False)
+    prep_api = Data_Prep_Api(name,period=20)
+    data_exo = prep_api.select_features_api(df_stocks,
+                                       Return=True,
+                                       Log_Return=False,
+                                       High_Low=False,
+                                       High_Close=True,
+                                       Low_Close=True,
+                                       Volume_Change=False,
+                                       Period_Volum=False,
+                                       Period_Vol=False,
+                                       Return_Index=False,
+                                       Volum_Index=False,
+                                       Relative_Return=False)
     # we select the rows needed
     data_exo = data_exo[- global_length : ]
 
@@ -60,7 +58,7 @@ def arima_multi_day(name, days, alpha) :
     code_name = company_dict[name]
 
     # we rebase 100 the return
-    data_exo = stock.Price_Rebase(data_exo)
+    data_exo = prep_api.Price_Rebase_api(data_exo)
 
     # we create the y_endogenous and y_exogenous
     y_endo = data_exo[f'Return_{code_name}_R']
@@ -71,7 +69,7 @@ def arima_multi_day(name, days, alpha) :
 
     # we need lists to store the results of the loop
     list_y_pred = []
-    baseline = []
+    #baseline = []
     real_value = []
     y_before = []
     y_conf_low = []
@@ -173,5 +171,7 @@ def arima_multi_day(name, days, alpha) :
     multi_days_results_df['perf_true'] = perf_true
     multi_days_results_df['perf_low'] = perf_low
     multi_days_results_df['perf_high'] = perf_high
+
+    multi_days_results_df = multi_days_results_df.set_index('Date')
 
     return multi_days_results_df

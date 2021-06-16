@@ -93,9 +93,19 @@ class Data_Prep_Api :
         # we return a df with 4 years of prices
         return data
 
-    def select_features_api(self, df, Return=True, Log_Return=False, High_Low=True, High_Close=True, Low_Close=True,
-                        Volume_Change=True, Period_Volum=True,
-                        Period_Vol=True, Return_Index=True, Volum_Index=True, Relative_Return=True) :
+    def select_features_api(self,
+                            df,
+                            Return=True,
+                            Log_Return=False,
+                            High_Low=False,
+                            High_Close=True,
+                            Low_Close=True,
+                            Volume_Change=False,
+                            Period_Volum=False,
+                            Period_Vol=False,
+                            Return_Index=False,
+                            Volum_Index=False,
+                            Relative_Return=False):
         '''Function to be able to remove easily features'''
 
         # *******************
