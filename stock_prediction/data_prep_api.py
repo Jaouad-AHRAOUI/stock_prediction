@@ -7,33 +7,42 @@ import yfinance as yf
 from datetime import date, timedelta
 import os
 
+from stock_prediction.params import company_dict, company_list
+
 
 class Data_Prep_Api :
 
     def __init__(self, name,period):
-        self.company_dict = pd.read_csv(os.path.join(os.path.dirname(__file__), "data/company_dict.csv"))
-        self.company_dict.set_index("name",inplace = True)
-        if name not in self.company_dict.index:
-            raise NameError(f"{name} should be in ---->", self.company_dict.index)
+        # the company_dict is in params.py
+        self.company_dict = company_dict
+        #self.company_dict = pd.read_csv(os.path.join(os.path.dirname(__file__), "data/company_dict.csv"))
+        #self.company_dict.set_index("name",inplace = True)
+        #if name not in self.company_dict.index:
+        #raise NameError(f"{name} should be in ---->", self.company_dict.index)
+        if name not in company_list:
+            raise NameError(f"{name} should be in ---->", company_list)
         self.name = name
         self.period = period
 
-    def load_data(self,max=False) :
+    def load_data(self,first_date) :
         '''laod data from api yfinance'''
-        if max==False:
-            return yf.download(self.company_dict.loc[f"{self.name}"][0], start=str(date.today() - timedelta(weeks=52*5)), end=str(date.today()))
+        if first_date!='max':
+            return yf.download(self.company_dict[self.name],
+                               start=str(first_date),
+                               end=str(date.today()))
         else:
-            return yf.download(self.company_dict.loc[f"{self.name}"][0], period = "max")
+            return yf.download(self.company_dict[self.name], period="max")
 
-    def data_prep_api(self,max=False) :
-        '''Function that make the data preparation for analysis'''
-        # first we retrieve the df
-        data = self.load_data(max)
-        data.reset_index(inplace=True)
+    def data_prep_api(self,df) :
+        '''Function that make the data preparation for analysis
+        This function has in parameters the dataframe loaded from yahoo'''
+        # first we retrieve the df and make a copy to be able to modify it later
+        data = df.copy()
+        #data.reset_index(inplace=True)
 
         # to be able to know the columns we use when df contains several stocks
         # we put the code of the company in each column name
-        col_name = self.company_dict.loc[f"{self.name}"][0]
+        col_name = self.company_dict[self.name]
 
         # we create the column "RETURN" on "Adj Close"
         # why ? Because no impact on dividends and stock splits
@@ -75,17 +84,17 @@ class Data_Prep_Api :
 
         # we call the function to add the index features EuroStoxx 50
         # the function creates the return for the index, volume, and Relative return
-        data = self.exo_stoxx50_api(data,max)
+        #data = self.exo_stoxx50_api(data,max)
         # finally we remove the rows with NaN (because volatility calculation)
         # and reset the index
-        data = data.drop(index=range(0, self.period))
-        data = data.reset_index(drop=True)
+        #data = data.drop(index=range(0, self.period))
+        #data = data.reset_index(drop=True)
 
         # we return a df with 4 years of prices
         return data
 
     def select_features_api(self, df, Return=True, Log_Return=False, High_Low=True, High_Close=True, Low_Close=True,
-                        Volume_Change=True, Period_Volum=True, Annual_Vol=True,
+                        Volume_Change=True, Period_Volum=True,
                         Period_Vol=True, Return_Index=True, Volum_Index=True, Relative_Return=True) :
         '''Function to be able to remove easily features'''
 
@@ -93,9 +102,9 @@ class Data_Prep_Api :
         # if period < 252 , don't use Annual_vol
         #********************
 
-        col_name = self.company_dict.loc[f'{self.name}'][0]
+        col_name = self.company_dict[self.name]
         # we retrieve our dataframe prepared
-        data = df
+        data = df.copy()
         if Return == False :
             del data[f'Return_{col_name}']
         if Log_Return == False:
@@ -110,8 +119,6 @@ class Data_Prep_Api :
             del data[f'Volume-Change_{col_name}']
         if Period_Volum == False:
             del data[f'Period_Volum_{col_name}']
-        # if Annual_Vol == False:
-        #     del data[f'Annual_Vol_{col_name}']
         if Period_Vol == False:
             del data[f'Period_Vol_{col_name}']
         if Return_Index == False:
@@ -123,33 +130,36 @@ class Data_Prep_Api :
 
         return data
 
-    def exo_stoxx50_api(self, df, max=False) :
-        '''This function will select the indexes we want to be part of the df'''
+    # def exo_stoxx50_api(self, df, max=False) :
+    #     '''This function will select the indexes we want to be part of the df'''
 
-        # we load euro stoxx 50 from yfinance
-        df_es50 = yf.download("^GSPC", start=str(date.today() - timedelta(weeks=52*5)), end=str(date.today()))
-        if max==True:
-            df_es50 = yf.download("^GSPC", period="max")
+    #     # we load euro stoxx 50 from yfinance
+    #     df_es50 = yf.download("^STOXX50E",
+    #                           start=str(date.today() -
+    #                                     timedelta(weeks=52 * 5)),
+    #                           end=str(date.today()))
+    #     if max==True:
+    #         df_es50 = yf.download("^STOXX50E", period="max")
 
-        df_es50.reset_index(inplace=True)
-        # we need the code of the company
-        col_name = self.company_dict.loc[f"{self.name}"][0]
+    #     df_es50.reset_index(inplace=True)
+    #     # we need the code of the company
+    #     col_name = self.company_dict.loc[f"{self.name}"][0]
 
-        # we create the new features in the df es_50
-        df_es50['Return_stoxx_50'] = df_es50['Close'].pct_change(1)
-        df_es50['Period_Volum_stoxx_50'] = df_es50['Volume'] / df_es50['Volume'].rolling(self.period).mean() - 1
-        # we select only the 2 columns we need
-        df_es50 = df_es50[['Date', 'Return_stoxx_50', 'Period_Volum_stoxx_50']]
-        # we merge on Date
-        df = df.merge(df_es50, how='left', on='Date')
+    #     # we create the new features in the df es_50
+    #     df_es50['Return_stoxx_50'] = df_es50['Close'].pct_change(1)
+    #     df_es50['Period_Volum_stoxx_50'] = df_es50['Volume'] / df_es50['Volume'].rolling(self.period).mean() - 1
+    #     # we select only the 2 columns we need
+    #     df_es50 = df_es50[['Date', 'Return_stoxx_50', 'Period_Volum_stoxx_50']]
+    #     # we merge on Date
+    #     df = df.merge(df_es50, how='left', on='Date')
 
-        # as we have more Date in the Stock analysed and in the index, we fill the NaN
-        df.fillna(value=0.0, inplace=True)
+    #     # as we have more Date in the Stock analysed and in the index, we fill the NaN
+    #     df.fillna(value=0.0, inplace=True)
 
-        # then we create the feature Return Relative
-        df[f'{col_name}_relatif'] = df[f'Return_{col_name}'] - df['Return_stoxx_50']
+    #     # then we create the feature Return Relative
+    #     df[f'{col_name}_relatif'] = df[f'Return_{col_name}'] - df['Return_stoxx_50']
 
-        return df
+    #     return df
 
     def Price_Rebase_api(self, df) :
         '''This function allows us to rebase 100 at the beginning of our time period
