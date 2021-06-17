@@ -233,11 +233,21 @@ def portfolio(open_price, close_price, true_returns, best_true, best_pred, cash_
             # there is a difference if we sell or buy the stock
             # here we have to take in consideration the case where rets is >0 but the stock
             # goes down , and contrary
-            perform_stock = (amount_end_of_day - amount_traded)
-            if perform_stock * rets > 0 :
-                perf_daily_saved += perform_stock
-            else :
-                perf_daily_saved += (perform_stock * -1)
+
+            # we also need the true return for that stock that day
+            rets_true = true_returns.loc[ptf_date, stocks]
+
+            if rets_true > 0 and rets > 0:
+                perform_stock = (amount_end_of_day - amount_traded)
+            elif rets_true < 0 and rets < 0:
+                perform_stock = (amount_end_of_day - amount_traded) * -1
+            elif rets_true > 0 and rets < 0:
+                perform_stock = (amount_end_of_day - amount_traded) * -1
+            elif rets_true < 0 and rets > 0:
+                perform_stock = (amount_end_of_day - amount_traded)
+
+            perf_daily_saved += perform_stock
+
 
             # we need the amount we would had if the return predicted was right
             # it takes in consideration the weight and the predicted return
