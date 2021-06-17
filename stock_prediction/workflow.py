@@ -1,14 +1,15 @@
 #---API related
-import os
-from math import sqrt
+
+import pandas as pd
 import yfinance as yf
 from datetime import date, timedelta, datetime
 from stock_prediction.data_prep_api import Data_Prep_Api
 from stock_prediction.features_exo_api import exo_selection_api
 from stock_prediction.arima import arima_multi_day
+from stock_prediction.tradding_app import best_stocks, true_returns, portfolio
 
-from stock_prediction.params import company_dict, dict_max_train, exo_dict, company_list
-
+from stock_prediction.params import company_dict, company_list
+import pdb
 
 def data_collection(start_date, period=20) :
     '''This function will load all the yahoo finance data and store them in dictionaries
@@ -130,3 +131,101 @@ def call_arima(start_date, dict_prep_data, alpha=0.05) :
         arima_df[comp] = df_arima
 
     return arima_df
+
+def arima_to_app(start_date, end_date, dict_arima, true=False) :
+    '''This funtion processes the results from arima and create the df
+    we need to run the trading application '''
+
+    #list to store
+    predict_arima = []
+    # we loop on the dictionary containing all the df results from the arima model
+    for comp in company_list :
+
+        # we need the df in dict_arima corresponding to the company name
+        comp_df = dict_arima[comp]
+        # first we need to select the rows in the data frame corresponding to the
+        # dates of our simulation
+        # we retrieve the indexes that are the dates, on a list format
+        list_index = comp_df.index.to_list()
+        # then take the rows on the full df
+        # we need to control if the start_date and end_date are in the list
+        # if one of them are not in the list, we take the the full from 0 (for start)
+        # and until the end (for end)
+        # then when we concat, we will have one or more stocks that give to the df_final
+        # too many columns and we will select only the columns from start to end
+
+        if start_date not in list_index :
+            start_index = 0
+        else :
+            start_index = list_index.index(start_date)
+        if end_date not in list_index :
+            end_index = len(list_index)
+        else:
+            end_index = list_index.index(end_date)
+
+        sim_df = comp_df.iloc[start_index : end_index + 1]
+        # now we want to create a df with the stock as a row and in columns the dates
+        #the values are in 'perf_pred columns
+        # fisrt we need to retrieve the new list of dates for the simulation
+        list_index_sim = sim_df.index.to_list()
+
+        # here we need to specify if we want the best true of the best predicted
+        if true :
+            df_pred = pd.DataFrame([sim_df['perf_true'].to_list()],
+                                   index=[comp],
+                                   columns=list_index_sim)
+        else :
+            df_pred = pd.DataFrame([sim_df['perf_pred'].to_list()],
+                                   index=[comp],
+                                   columns=list_index_sim)
+        # we store it in the list
+        predict_arima.append(df_pred)
+
+    # now we need to concatenate all the df
+    # we want all the dates represented, if one stock does not have pred
+    # for one specific day, we fill NaN with 0
+    final_pred = pd.concat(predict_arima, axis=0, join='outer')
+    final_pred.fillna(value=0.0, inplace=True)
+
+    # now we need to select only the columns of the selected dates
+    # in case the dates asked were not in the list_index, we have to many columns
+    # fucking dates
+    list_dates_final = final_pred.columns.to_list()
+    #pdb.set_trace()
+    start_final = list_dates_final.index(start_date)
+    end_final = list_dates_final.index(end_date)
+
+    final_pred = final_pred.iloc[:, start_final : end_final + 1]
+
+    # for the app trading we need a column 'stocks' so we need to reset_index and rename the column
+    final_pred = final_pred.reset_index()
+    final_pred = final_pred.rename(columns={'index': 'stocks'})
+
+    return final_pred
+
+def run_all(start_date, end_date, amount) :
+    ''' this function is the one to simulate our trading app
+    See Notebook "workflow_test" to have the decomposition '''
+
+    dict_hard_data, dict_prep_data, df_es50 = data_collection(start_date, 20)
+    arima_df = call_arima(start_date, dict_prep_data, alpha=0.05)
+    final_pred = arima_to_app(start_date, end_date, arima_df, true=False)
+    final_true = arima_to_app(start_date, end_date, arima_df, true=True)
+    df_close_prices, df_true_returns = true_returns(start_date, end_date,
+                                                    dict_hard_data)
+    best_pred = best_stocks(final_pred, sell=True, eq_weight=False)
+    best_true = best_stocks(final_true, sell=False, eq_weight=True)
+    portfolio_pred = portfolio(df_close_prices,
+                               df_true_returns,
+                               best_true,
+                               best_pred,
+                               amount,
+                               true=False)
+    portfolio_true = portfolio(df_close_prices,
+                               df_true_returns,
+                               best_true,
+                               best_pred,
+                               amount,
+                               true=True)
+
+    return portfolio_pred, portfolio_true
