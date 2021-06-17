@@ -94,28 +94,35 @@ df = get_select_box_data()
 option = st.selectbox('Select stock to visualize', df['stocks'])
 
 pred_df = df[df['stocks'] == option]
-
+pred_df = pred_df.T
+pred_df.drop(index= pred_df.index[0], axis= 0, inplace= True)
+pred_df.columns= [option]
 st.write(pred_df)
 
-#Filter df inverse
-pred_df.reindex(index= pred_df.columns)
 
 # True returns
 df_close_prices, df_true_returns = true_returns('2021-01-12', '2021-01-15', dict_hard_data)
 
-true_df = df_true_returns.columns(option)
-st.write(df_true_returns)
+true_df = df_true_returns[option]
+true_df.drop(index= true_df.index[0], axis= 0, inplace= True)
+st.write(true_df)
 
 
-# Add a Plot
+
+# Add a pred Plot
 @st.cache
 def get_line_chart_data():
     print('get_line_chart_data called')
-    return filtered_df
+    df = pd.concat([pred_df,true_df], axis= 1)
+    df.columns= ['prediction', 'real']
+    return df
 
 df = get_line_chart_data()
-
+st.write(df)
 st.line_chart(df)
+
+
+
 
 
 
