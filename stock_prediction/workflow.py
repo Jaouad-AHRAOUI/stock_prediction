@@ -211,17 +211,17 @@ def run_all(start_date, end_date, amount) :
     arima_df = call_arima(start_date, dict_prep_data, alpha=0.05)
     final_pred = arima_to_app(start_date, end_date, arima_df, true=False)
     final_true = arima_to_app(start_date, end_date, arima_df, true=True)
-    df_close_prices, df_true_returns = true_returns(start_date, end_date,
-                                                    dict_hard_data)
+    df_open_prices, df_close_prices, df_true_returns = true_returns(
+        start_date, end_date, dict_hard_data)
     best_pred = best_stocks(final_pred, sell=True, eq_weight=False)
     best_true = best_stocks(final_true, sell=False, eq_weight=True)
-    portfolio_pred = portfolio(df_close_prices,
+    portfolio_pred = portfolio(df_open_prices, df_close_prices,
                                df_true_returns,
                                best_true,
                                best_pred,
                                amount,
                                true=False)
-    portfolio_true = portfolio(df_close_prices,
+    portfolio_true = portfolio(df_open_prices, df_close_prices,
                                df_true_returns,
                                best_true,
                                best_pred,
