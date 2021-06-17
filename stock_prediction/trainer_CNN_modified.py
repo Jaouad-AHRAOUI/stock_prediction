@@ -75,19 +75,20 @@ company_dict = {
     'nokia' : 'NOKIA.HE'
 }
 
-#---Length of sequences (prediction period)
-len_=20
-
 #---Load API data function for a selected period
-def load_data_api(company, start_date='2017-05-31', end_date='2019-04-10', len_=len_):
+def load_data_api(company, start_date='2017-05-31', end_date='2019-04-10', len_=30):
 
     prep_class = Data_Prep_Api(company, len_)
-    df = prep_class.data_prep_api() # (max=True)
+    df = prep_class.data_prep_api(max=True) # (max=True)
+    # prep_class.select_features_api(df, Return = True, Log_Return=False, High_Low=True, High_Close=True, Low_Close=True,
+    #                     Volume_Change=False, Period_Volum=True, Annual_Vol=False,
+    #                     Period_Vol=True, Return_Index=True, Volum_Index=True, Relative_Return=True)
+
     prep_class.select_features_api(df, Return = True, Log_Return=False, High_Low=True, High_Close=True, Low_Close=True,
                         Volume_Change=False, Period_Volum=True, Annual_Vol=False,
-                        Period_Vol=True, Return_Index=True, Volum_Index=True, Relative_Return=True)
+                        Period_Vol=False, Return_Index=True, Volum_Index=True, Relative_Return=False)
 
-    df = exo_selection_api(df, ["sp500", "eurusd", "crude", "vix"]) # ,max=True) "gold", "nasdaq",
+    df = exo_selection_api(df, ["sp500", "eurusd", "crude", "vix"], max=True) # ,max=True) "gold", "nasdaq",
 
     df = df.sort_values('Date')
     
@@ -121,7 +122,7 @@ def train_test_val_split(df, horizon=1, train_threshold=0.6, val_threshold=0.8):
     return df_train, df_val, df_test
 
 
-def shift_sequences(df, idx, length=len_, horizon=1):
+def shift_sequences(df, idx, length=30, horizon=1):
     
     """This function is able to get as many subsequences for X and a corresponding target y
     Nas possible, taking in account lenght of sequence and horizon."""
@@ -131,7 +132,7 @@ def shift_sequences(df, idx, length=len_, horizon=1):
     y=[]
     for start in range(last_possible):
         X.append(df[start: start+length].values)
-        y.append(df.iloc[start+length+horizon][f'Return_{idx}'])
+        y.append(df.iloc[start+length+horizon-1][f'Return_{idx}'])
     
     # random permutation of the sequences to train
     perm = np.random.permutation(last_possible)
@@ -141,7 +142,7 @@ def shift_sequences(df, idx, length=len_, horizon=1):
 
 
 #--shift_sequences in order
-def shift_sequences_pred(df, idx, length=len_, horizon=1):
+def shift_sequences_pred(df, idx, length=30, horizon=1):
     
     """This function is able to get as many subsequences for X and a corresponding target y
     Nas possible, taking in account lenght of sequence and horizon."""
@@ -151,7 +152,7 @@ def shift_sequences_pred(df, idx, length=len_, horizon=1):
     y=[]
     for start in range(last_possible):
         X.append(df[start: start+length].values)
-        y.append(df.iloc[start+length+horizon][f'Return_{idx}'])
+        y.append(df.iloc[start+length+horizon-1][f'Return_{idx}'])
 
     X = np.array(X)
     y = np.array(y)
@@ -164,13 +165,13 @@ def train_model(df,
                 train_threshold=0.6,
                 val_threshold=0.8,
                 nb_sequences=50,
-                len_=len_,
+                len_=30,
                 l_rate=0.01,
                 momentum=0.9,
                 loss='MAE',
                 metric=MAE,
                 patience=50,
-                batch_size=32,
+                batch_size=128,
                 horizon=1,
                 verbose=2):
     """Train model function:
@@ -307,17 +308,17 @@ if __name__ == '__main__':
     data = []
     idx = []
     for company in company_dict.keys():
-        data_loc, idx_loc = load_data_api(company)
-        data.append(data_loc[:int(data_loc.shape[0]*0.6)])  # Pre-covid data
+        data_loc, idx_loc = load_data_api(company, start_date='2012-01-01', end_date='2019-10-04', len_=30) # Pre-covid data
+        data.append(data_loc)
         idx.append(idx_loc)
 
 
     #---Train model on Pre_covid data
     X_train, y_train, X_val, y_val, X_test, y_test, model = train_model(df=data,
                                                                         idx=idx,
-                                                                        len_=len_, 
+                                                                        len_=30, 
                                                                         l_rate=0.01,
-                                                                        batch_size=32,
+                                                                        batch_size=128,
                                                                         patience=50,
                                                                         loss='MAE',
                                                                         metric=MAE,
@@ -333,7 +334,7 @@ if __name__ == '__main__':
 
 
 #---Function that does return prediction for a given period for selected companies
-def prediction_return_cnn(start='2020-06-11', stop='2021-06-11'):
+def prediction_return_cnn(start='2016-07-05', stop = '2021-06-11'):
 
     """This function allows to automatically load the data for a given period with an API,
         to select same features, that model was trained with,
@@ -342,7 +343,7 @@ def prediction_return_cnn(start='2020-06-11', stop='2021-06-11'):
 
     #---Load trained model
     path = os.path.dirname(os.path.abspath(__file__))
-    model = models.load_model(os.path.join(path, 'saved_models_cnn/model_cnn_vinci_tr_2012_2019_f20/')) #Reaplce with a proper trained model name
+    model = models.load_model(os.path.join(path, 'saved_models_cnn/model_cnn_all_tr_2012_2019_f30_lr0001_p50_/')) #Reaplce with a proper model ex.: model_cnn_vinci_tr_2012_2019_f20
 
     len_ = model.layers[0].output_shape[1]
 
