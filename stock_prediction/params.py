@@ -1,7 +1,7 @@
 # list of the companies
 # refer to this name to ask the csv file for the analysis
 company_list = [
-    'asml', 'lvmh', 'sap', 'linde', 'siemens', 'total', 'sanofi', 'allianz',
+    'asml', 'lvmh', 'sap', 'siemens', 'total', 'sanofi', 'allianz',
     'loreal', 'schneider', 'iberdrola', 'enel', 'air-liquide', 'basf', 'bayer',
     'adidas', 'airbus', 'deutsche-telecom', 'daimler', 'bnp',
     'anheuser-busch', 'vinci', 'banco-santander', 'philips', 'kering',
@@ -16,7 +16,6 @@ company_dict = {
     'asml': 'ASML.AS',
     'lvmh': 'MC.PA',
     'sap': 'SAP.DE',
-    'linde': 'LIN',
     'siemens': 'SIE.DE',
     'total': 'FP.PA',
     'sanofi': 'SAN.PA',
@@ -69,7 +68,6 @@ dict_max_train = {
     'asml': 43,
     'lvmh': 43,
     'sap': 46,
-    'linde': 45,
     'siemens': 46,
     'total': 46,
     'sanofi': 44,
@@ -123,7 +121,6 @@ exo_dict = {
     'asml': ['High-Close_ASML.AS', 'Low-Close_ASML.AS'],
     'lvmh': ['High-Close_MC.PA', 'Low-Close_MC.PA'],
     'sap': ['High-Close_SAP.DE', 'Low-Close_SAP.DE'],
-    'linde': ['High-Close_LIN', 'Low-Close_LIN'],
     'siemens': ['High-Close_SIE.DE', 'Low-Close_SIE.DE'],
     'total': ['High-Close_FP.PA', 'Low-Close_FP.PA'],
     'sanofi': ['High-Close_SAN.PA', 'Low-Close_SAN.PA'],

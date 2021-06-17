@@ -65,6 +65,10 @@ def true_returns(start_date, end_date, dict_hard_data) :
     # we need valid dates if not errors
     # in the future that would be a point of improvement but no time
 
+    # we need to know the dates gap between start date and end date because some of the stocks
+    # does not have the date
+    # so we make the search on EuroStoxx to know the gap
+
     # we create a empty dict to store the data
     dict_close_prices = {}
     dict_true_returns = {}
@@ -75,6 +79,7 @@ def true_returns(start_date, end_date, dict_hard_data) :
         # selection of the rows depending on dates
         # because we are lazy and missing time, we must find a time period with all stocks traded
         #stock_df = stock_df.iloc[stock_df.loc[stock_df['Date'] == start_date].index[0] - 1 : stock_df[stock_df['Date'] == end_date].index[0]]
+
         stock_df = stock_df.loc[
           stock_df.loc[stock_df['Date'] == start_date].index[0] - 1 :
             stock_df[stock_df['Date'] == end_date].index[0]]
