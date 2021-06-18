@@ -16,66 +16,40 @@ from stock_prediction.tradding_app import true_returns, portfolio, best_stocks
 from PIL import Image
 import base64
 
-image = Image.open('img/wagon.png')
-# st.sidebar.image(image, caption='Le Wagon', use_column_width=False)
 
-
-
-# @st.cache
-# def load_image(path):
-#     with open(path, 'rb') as f:
-#         data = f.read()
-#     encoded = base64.b64encode(data).decode()
-#     return encoded
-
-# def image_tag(path):
-#     encoded = load_image(path)
-#     tag = f'<img src="data:image/png;base64,{encoded}">'
-#     return tag
-
-# def background_image_style(path):
-#     encoded = load_image(path)
-#     style = f'''
-#     <style>
-#     body {{
-#         background-image: url("data:image/png;base64,{encoded}");
-#         background-size: cover;
-#     }}
-#     </style>
-#     '''
-#     return style
-
-# image_path = 'images/python.png'
-# image_link = 'https://docs.python.org/3/'
-
-# st.write('*Hey*, click me I\'m a button!')
-
-# st.write(f'<a href="{image_link}">{image_tag(image_path)}</a>', unsafe_allow_html=True)
-
-# if st.checkbox('Show background image', False):
-#     st.write(background_image_style(image_path), unsafe_allow_html=True)
-
-
+#---Logo sidebar
+image1 = Image.open('img/le_wagon_small.png')
+image2 = Image.open('img/eurostoxx-50.png')
+st.sidebar.image(image2, caption='EuroStoxx50', use_column_width=False) #[image1, image2]
+# st.image(image1)
+st.image(image1, caption='Le Wagon', use_column_width=False)
+# st.sidebar.image(image2, caption='EuroStoxx50', use_column_width=False)
 
 
 #---Set a title
 # st.title('Stock return prediction')
 st.markdown("<h1 style='text-align: center; color: black;'>Stock return prediction</h1>", unsafe_allow_html=True)
+# st.markdown("<h1 style='text-align: center; color: black;'>1 day traiding application</h1>", unsafe_allow_html=True)
 
 
-# #---Button
-# if st.button('Run'):
-#     #---Put all you want to execute when button is clicked
 
-    
-#     print('button clicked!')
-#     st.write('I was clicked 🎉')
-#     st.write('Further clicks are not visible but are executed')
-# else:
-#     st.write('I was not clicked 😞')
+# #---Background image
+# main_bg = "img/background_presentation.jpg" #background_presentation.jpg, Le_wagon_fond_ecran.png
+# main_bg_ext = "jpg"
+# st.markdown(
+#     f"""
+#     <style>
+#     .reportview-container {{
+#         background: url(data:image/{main_bg_ext};base64,{base64.b64encode(open(main_bg, "rb").read()).decode()})
+#     }}
+#     </style>
+#     """,
+#     unsafe_allow_html=True)
+
 
 
 #---Select start date and end date for dataframe generation to show prediction for best stocks
+st.sidebar.markdown("**Select a traiding period**")
 
 start_date = st.sidebar.date_input(
     "Please, enter start date:",
@@ -86,17 +60,16 @@ end_date = st.sidebar.date_input(
     datetime.date(2021, 6, 11))
 
 # Select price
-'''
-## Are you ready to invest ?
-'''
-invest = st.sidebar.slider('Please, enter the amount from 10.000€ to 100.000€:',10000,100000,50000, 10000)
+st.sidebar.markdown("**Are you ready to invest?**")
+
+invest = st.sidebar.slider('Please, enter the investement amount from 10.000€ to 100.000€ :',10000,100000,50000, 10000)
 
 
 
 #---Visualize all stocks table
-st.markdown("""
-**Predictive returns for Euro Stoxx 50**
-            """)
+# st.markdown("""
+# **Predictive returns for Euro Stoxx 50**
+#             """)
 @st.cache
 def visualize_stocks():
 
@@ -130,18 +103,19 @@ arima_df, final_pred, best_pred, best_true, dict_hard_data, dict_prep_data, df_e
 
 #---Select day to visualize 10 best companies to invest
 list_days = pd.date_range(start = str(start_date), end = str(end_date)).strftime("%Y-%m-%d").to_list()
-select_day = st.sidebar.selectbox('Choose a day to visualize best stocks: ', list_days)
+st.sidebar.markdown("**Let's visualize Top 10 stocks**")
+select_day = st.sidebar.selectbox('Please, select a day for prediction:', list_days)
 day = list_days.index(select_day)
 
 #---Prediction for best stocks
-# st.markdown("<h3 style='text-align: center; color: blue;'>Top 10 stocks Prediction</h3>", unsafe_allow_html=True)
+# st.markdown("<h3 style='text-align: center; color: blue;'>Top 10 stocks prediction</h3>", unsafe_allow_html=True)
 best_pred_day = best_pred[day].drop(columns = 'weights')
 best_pred_day = best_pred_day*100
-best_pred_day.columns=[f'Return pred,% {select_day}']
+best_pred_day.columns=[f'% Return pred on {select_day}']
 # st.write(best_pred_day)
 
 #---True return for best stocks
-# st.markdown("<h3 style='text-align: center; color: black;'>Top 10 stocks Real</h3>", unsafe_allow_html=True)
+# st.markdown("<h3 style='text-align: center; color: black;'>Top 10 stocks in reality</h3>", unsafe_allow_html=True)
 best_true_day = best_true[day]
 
 
@@ -149,7 +123,7 @@ best_true_day = best_true[day]
 #---True return (buying on new day open price)
 best_pred_stocks = best_pred[day].index.to_list()
 return_true = df_true_returns.T.loc[best_pred_stocks][[select_day]]*100
-return_true.columns=[f'Return, % {select_day}']
+return_true.columns=[f'% Return on {select_day}']
 
 #---Retrieve predicted_return_amount for Top pred and perform_stock for Top true, + Change_overnight, % Open-Close
 keys = best_pred[day].index
@@ -166,72 +140,58 @@ return_true['Real amount, €'] = pd.Series(perform_stock, index = return_true.i
 best_pred_day['Change overnight'] = pd.Series(change_overnight, index = best_pred_day.index)*100
 return_true['% Open-Close'] = pd.Series(open_close, index = return_true.index)*100
 
-#---Make columns to visualize our prediction and real top 10 stocks
-# cols_title = st.beta_columns(2)
-# cols_title[0].markdown("<h3 style='text-align: center; color: blue;'>Top 10 stocks Prediction</h3>", unsafe_allow_html=True)
-# cols_title[1].markdown("<h3 style='text-align: center; color: black;'>Top 10 stocks Real</h3>", unsafe_allow_html=True)
 
-# cols = st.beta_columns(2)
-# cols[0].write(best_pred_day)
-# cols[1].write(return_true) #best_true_day
+#-------------------------------------------------color red negative values
+def color_set(val):
+    """
+    Takes a scalar and returns a string with
+    the css property `'color: red'` for negative
+    strings, black otherwise.
+    """
+    color = 'red' if val < 0 else 'black'
+    return 'color: %s' % color
 
+#---1.Visualize classic way
+# # Prediction
+# st.markdown("<h3 style='text-align: center; color: red;'>Top 10 stocks Prediction</h3>", unsafe_allow_html=True)
+# #------------------------------------------------st.write(best_pred_day)
+# #highlite
+# st.dataframe(best_pred_day.style.highlight_max(axis=0))
 
-#--Visualize classic way
+# # True
+# st.markdown("<h3 style='text-align: center; color: red;'>Top 10 stocks</h3>", unsafe_allow_html=True)
+# #------------------------------------------------st.write(return_true)
+# st.dataframe(return_true.style.highlight_max(axis=0))
 
-# Prediction
-st.markdown("<h3 style='text-align: center; color: red;'>Top 10 stocks Prediction</h3>", unsafe_allow_html=True)
-st.write(best_pred_day)
+#---2.Make columns to visualize our prediction and real top 10 stocks
+cols_title = st.beta_columns(2)
+cols_title[0].markdown("<h3 style='text-align: center; color: steelblue;'>Top 10 stocks Prediction</h3>", unsafe_allow_html=True)
+cols_title[1].markdown("<h3 style='text-align: center; color: darkorange;'>Top 10 stocks</h3>", unsafe_allow_html=True)
 
-# True
-st.markdown("<h3 style='text-align: center; color: black;'>Top 10 stocks</h3>", unsafe_allow_html=True)
-st.write(return_true)
+cols = st.beta_columns(2)
+cols[0].dataframe(best_pred_day.style.applymap(color_set)) # highlight_max(axis=0)
+cols[1].dataframe(return_true.style.applymap(color_set)) #best_true_day
 
 
 
 #---Visualize price Expected vs Real
-st.markdown("<h3 style='text-align: center; color: black;'>Expected vs Real amount, €</h3>", unsafe_allow_html=True)
-pred_amount = best_pred_day[[f'R_pred {select_day}']]
-true_amount = return_true[[f'R_real {select_day}']]
+st.markdown("<h3 style='text-align: center; color: black;'>Top 10 stocks 1 day return Expected vs Real</h3>", unsafe_allow_html=True)
+pred_amount = best_pred_day[[f'% Return pred on {select_day}']]
+true_amount = return_true[[f'% Return on {select_day}']]
 df_concat = pd.concat([pred_amount, true_amount], axis=1)
 st.bar_chart(df_concat)
 
+#---Table & Plot performance
+df_performance = pd.DataFrame.from_dict(portfolio_pred[0])
+
+st.markdown("<h3 style='text-align: center; color: black;'>Performance evolution</h3>", unsafe_allow_html=True)
+#-----------------------------------------------st.write(df_performance)
+st.table(df_performance)
+
+st.markdown("<h3 style='text-align: center; color: black;'>Daily return Expected vs Real</h3>", unsafe_allow_html=True)
+st.line_chart(df_performance[['daily_return_pred', 'daily_return_true']])
 
 
-
-
-
-# #---Select box to select stock to plot
-# @st.cache
-# def get_select_box_data():
-#     print('get_select_box_data called')
-#     return best_pred_day
-
-
-
-# cash_pred = pd.DataFrame(portfolio_pred[0]['cash'])
-# st.write(cash_pred)
-
-
-
-# #---Add a pred true values plot
-# @st.cache
-# def get_line_chart_data():
-#     print('get_line_chart_data called')
-#     df = pd.concat([pred_df,true_df], axis= 1)
-#     df.columns= ['prediction', 'real']
-#     return df
-
-# df = get_line_chart_data()
-
-# #---Plot chosen stock
-
-# # st.write('Prediction vs Real return for selected stock: ', option)
-# # st.line_chart(df)
-
-# st.markdown("<h2 style='text-align: center; color: black;'>Prediction vs Real return for selected stock</h2>", unsafe_allow_html=True)
-# st.line_chart(df)
-
-# st.sidebar.markdown("* The one-day return of a stock *j* on day *t* with price ${P_j^t}$ (adjusted from dividends and stock splits) is given by the **residual returns formula**:$$ {R_j^t} = \frac{P_j^t}{P_j^{t-1}} - 1 $$")
 
 if st.button('Thank you for your attention !🎈🎈🎈 '):
     st.balloons()
